@@ -2,11 +2,17 @@
 // rarity: 'SP'=あたり(レインボー) / 'R'=レア / 'N'=通常
 // w: 同レアリティ内の重み（小さいほど出にくい＝人気キャラを希少に）
 // img: キャラ画像のパス（公式素材に差し替え可）
+//
+// RARITY の各値:
+//   tier   … 出現率(%)。SP→R→N の宣言順がレア度の順序になります。
+//   label/stars/cls … 表示用。
+//   演出（app.js が参照）: chargeCol=溜め色 / chargeMs=溜め時間(ms) /
+//   chargeTop=溜め音の最高周波数 / shockCol=開封の衝撃波色 / sparks=きらめき数。
 
 window.RARITY = {
-  SP: { label: 'あたり',   stars: '★★★', cls: 'sp', tier: 5  },
-  R:  { label: 'レア',     stars: '★★',  cls: 'r',  tier: 25 },
-  N:  { label: 'ノーマル', stars: '★',   cls: 'n',  tier: 70 },
+  SP: { label: 'あたり',   stars: '★★★', cls: 'sp', tier: 5,  chargeCol: 'rgba(255,170,215,.7)',  chargeMs: 680, chargeTop: 1000, shockCol: '#ffd66b', sparks: 16 },
+  R:  { label: 'レア',     stars: '★★',  cls: 'r',  tier: 25, chargeCol: 'rgba(255,200,70,.62)',  chargeMs: 680, chargeTop: 760,  shockCol: '#ffd66b', sparks: 10 },
+  N:  { label: 'ノーマル', stars: '★',   cls: 'n',  tier: 70, chargeCol: 'rgba(110,175,255,.48)', chargeMs: 560, chargeTop: 520,  shockCol: '#bcd8ff', sparks: 5  },
 };
 
 window.COST = { single: 100, ten: 1000 };       // 1回 / 10連 のコイン

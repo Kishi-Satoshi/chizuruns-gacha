@@ -1,0 +1,3 @@
+# build artifacts（build.py がルートに生成。CI で再生成されるためコミット不要）
+/index.html
+/standalone.html

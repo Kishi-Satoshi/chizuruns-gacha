@@ -3,20 +3,28 @@
 const $ = s => document.querySelector(s);
 const fmt = n => n.toLocaleString('ja-JP');
 
+/* ---------- rarity / pools（data.js から一度だけ導出） ---------- */
+const RARITY_ORDER = Object.keys(RARITY);                                      // ['SP','R','N']（レア順）
+const rarityRank = r => RARITY_ORDER.indexOf(r);                              // 小さいほどレア
+const POOLS  = RARITY_ORDER.reduce((m,t)=>(m[t]=CHARS.filter(c=>c.rarity===t), m), {});
+const TIER_W = RARITY_ORDER.reduce((m,t)=>(m[t]=POOLS[t].reduce((s,c)=>s+c.w,0), m), {});
+const CHARS_SORTED = [...CHARS].sort((a,b)=>rarityRank(a.rarity)-rarityRank(b.rarity));
+
 /* ---------- probability ---------- */
-function tierWeights(t){ return CHARS.filter(c=>c.rarity===t).reduce((s,c)=>s+c.w,0); }
-function charRate(c){ return RARITY[c.rarity].tier * (c.w / tierWeights(c.rarity)); }
+function charRate(c){ return RARITY[c.rarity].tier * (c.w / TIER_W[c.rarity]); }
 function pullOne(){
   const r = Math.random()*100;
-  const tier = r<RARITY.SP.tier ? 'SP' : r<RARITY.SP.tier+RARITY.R.tier ? 'R' : 'N';
-  const pool = CHARS.filter(c=>c.rarity===tier);
-  let sum = pool.reduce((s,c)=>s+c.w,0), x = Math.random()*sum;
+  let acc = 0, tier = RARITY_ORDER[RARITY_ORDER.length-1];
+  for(const t of RARITY_ORDER){ acc += RARITY[t].tier; if(r < acc){ tier = t; break; } }
+  const pool = POOLS[tier]; let x = Math.random()*TIER_W[tier];
   for(const c of pool){ x-=c.w; if(x<=0) return c; }
   return pool[pool.length-1];
 }
 
 /* ---------- state ---------- */
 let state = { coin:START.coin, tic:START.tic, owned:{} };
+const canSingle = () => state.coin>=COST.single || state.tic>0;   // 1回（コインorチケット）
+const canTen    = () => state.coin>=COST.ten;                     // 10連（コインのみ）
 let _wa = {coin:null,tic:null};
 function setNum(el,target,key){
   const cur = parseInt((el.textContent||'').replace(/[^0-9]/g,''))||0;
@@ -57,7 +65,7 @@ const SFX = (()=>{
     coin(){ if(!on||!ac())return; const t=ctx.currentTime; beep(880,null,t,.07,'square',.15); beep(1320,null,t+.07,.12,'square',.15); },
     spin(){ if(!on||!ac())return; const t=ctx.currentTime; beep(200,520,t,.5,'sawtooth',.10); for(let i=0;i<8;i++) noise(t+i*.055,.025,.07,2600); },
     drop(){ if(!on||!ac())return; const t=ctx.currentTime; beep(380,150,t,.12,'sine',.26); beep(520,260,t+.12,.1,'sine',.16); },
-    charge(r){ if(!on||!ac())return; const t=ctx.currentTime; const top=r==='SP'?1000:r==='R'?760:520;
+    charge(r){ if(!on||!ac())return; const t=ctx.currentTime; const top=RARITY[r].chargeTop;
       beep(160,top,t,.62,'sawtooth',.12); for(let i=0;i<16;i++) noise(t+i*(.05-i*.0016),.02,.04+i*.008,3400);
       if(r!=='N') for(let i=0;i<6;i++) beep(1500+Math.random()*900,null,t+.3+i*.05,.1,'sine',.06); },
     impact(){ if(!on||!ac())return; const t=ctx.currentTime; beep(140,60,t,.18,'sine',.3); noise(t,.12,.25,1800); },
@@ -73,6 +81,7 @@ function toggleSound(){ SFX.setOn(!SFX.on()); const s=$('#soundState'); if(s)s.t
 
 /* ---------- particles ---------- */
 const SP_COL=['#ff7ba6','#ffd66b','#9fe88a','#79c9ff','#c79bff'];
+const R_CONFETTI=['#ffd66b','#ffab2e','#ff7ba6'];
 function spawnSparks(node,n){ const ch=['✨','⭐','💫','🌟','💖','💛'];
   for(let i=0;i<n;i++){ const s=document.createElement('div'); s.className='spark';
     const a=Math.random()*Math.PI*2, d=70+Math.random()*120;
@@ -115,10 +124,10 @@ function doTicket(){ if(spinning)return;
   if(state.tic<1){ SFX.tap(); toast('チケットがないよ💦'); return; }
   SFX.tap(); state.tic-=1; updateWallet(); spinSingle(); }
 function doTen(){ if(spinning)return;
-  if(state.coin<COST.ten){ SFX.tap(); toast('コインが足りないよ💦 ショップで増やそう'); return; }
+  if(!canTen()){ SFX.tap(); toast('コインが足りないよ💦 ショップで増やそう'); return; }
   SFX.tap(); state.coin-=COST.ten; updateWallet(); spinning=true;
   const results=[]; for(let i=0;i<10;i++){ const c=pullOne(); const first=addOwned(c); results.push({c,first}); }
-  const best=results.reduce((a,b)=>({SP:3,R:2,N:1})[b.c.rarity]>({SP:3,R:2,N:1})[a.c.rarity]?b:a);
+  const best=results.reduce((a,b)=>rarityRank(b.c.rarity)<rarityRank(a.c.rarity)?b:a);
   machineAnim('#ffd66b');
   setTimeout(()=>showCharge(best.c.rarity,()=>{ showTen(results,best); spinning=false; }),460);
 }
@@ -127,18 +136,17 @@ function spinSingle(){ spinning=true; const c=pullOne(); machineAnim(c.color);
 
 /* charge build-up (anticipation) */
 function showCharge(rarity,cb){
-  const ch=$('#charge');
-  const col = rarity==='SP' ? 'rgba(255,170,215,.7)' : rarity==='R' ? 'rgba(255,200,70,.62)' : 'rgba(110,175,255,.48)';
-  ch.style.setProperty('--cc', col);
+  const ch=$('#charge'), R=RARITY[rarity];
+  ch.style.setProperty('--cc', R.chargeCol);
   ch.classList.remove('on'); void ch.offsetWidth; ch.classList.add('on');
   SFX.charge(rarity);
-  setTimeout(()=>{ ch.classList.remove('on'); cb(); }, rarity==='N'?560:680);
+  setTimeout(()=>{ ch.classList.remove('on'); cb(); }, R.chargeMs);
 }
 
 /* ---------- reveal (single) ---------- */
 function showReveal(c, first){
   const R=RARITY[c.rarity], sp=c.rarity==='SP';
-  const canAfford = state.coin>=COST.single || state.tic>0;
+  const canAfford = canSingle();
   $('#revealBody').innerHTML = `
     <div class="reveal-root" data-r="${c.rarity}">
       <div class="rflood"></div><div class="rays2"></div>
@@ -166,12 +174,12 @@ function showReveal(c, first){
   let opened=false, done=false, timers=[];
   function openFx(){ if(opened)return; opened=true; cap.classList.add('opening'); SFX.pop();
     if(c.rarity!=='N') SFX.impact();
-    shockwave(stage, sp?'#ffd66b':(c.rarity==='R'?'#ffd66b':'#bcd8ff'));
-    spawnSparks(stage, sp?16:(c.rarity==='R'?10:5)); if(sp) flashEl(stage); }
+    shockwave(stage, R.shockCol);
+    spawnSparks(stage, R.sparks); if(sp) flashEl(stage); }
   function revealNow(){ if(done)return; done=true; timers.forEach(clearTimeout); openFx();
     root.classList.add('revealed'); $('#figwrap').classList.add('shine-on'); $('#rinfo').style.opacity=1;
     if(sp){ confettiBurst($('#reveal'),66,SP_COL); setTimeout(()=>spawnSparks(stage,12),120); SFX.jackpot(); }
-    else if(c.rarity==='R'){ confettiBurst($('#reveal'),26,['#ffd66b','#ffab2e','#ff7ba6']); SFX.chimeR(); }
+    else if(c.rarity==='R'){ confettiBurst($('#reveal'),26,R_CONFETTI); SFX.chimeR(); }
     else { SFX.chimeN(); } }
   timers.push(setTimeout(()=>SFX.drop(),180));
   timers.push(setTimeout(openFx,720));
@@ -186,7 +194,7 @@ function showTen(results, best){
   const cells=results.map((r,i)=>{ const R=RARITY[r.c.rarity]; const glow=r.c.rarity!=='N'?`glow ${R.cls==='sp'?'sp':''}`:'';
     return `<div class="ten-cell"><div class="mini ${glow}" style="animation-delay:${i*0.09}s">${figHTML(r.c,52)}</div>
       <div class="tn">${r.c.name}${r.first?' <span style="color:#ffd66b">N</span>':''}</div></div>`; }).join('');
-  const canAfford = state.coin>=COST.ten;
+  const canAfford = canTen();
   $('#revealBody').innerHTML = `
     <div class="reveal-root" data-r="${best.c.rarity}">
       ${best.c.rarity==='SP'?'<div class="rflood"></div>':''}
@@ -195,7 +203,7 @@ function showTen(results, best){
       <div class="ten-grid">${cells}</div>
       <div class="ten-sum">レア以上 ${rcount} 体！</div>
       <div class="ractions">
-        <button class="ra-again" ${canAfford?'':'disabled'} onclick="SFX.tap();close_('reveal');setTimeout(()=>{if(state.coin>=COST.ten)doTen();},180)">もう10連</button>
+        <button class="ra-again" ${canAfford?'':'disabled'} onclick="SFX.tap();close_('reveal');setTimeout(()=>{if(canTen())doTen();},180)">もう10連</button>
         <button class="ra-close" onclick="SFX.tap();close_('reveal')">とじる</button>
       </div>
     </div>`;
@@ -203,15 +211,14 @@ function showTen(results, best){
   $('#reveal').classList.add('show');
   results.forEach((r,i)=>setTimeout(()=>{ r.c.rarity==='N'?SFX.tap():SFX.sparkle(); }, 120+i*90));
   setTimeout(()=>{ if(best.c.rarity==='SP'){ confettiBurst($('#reveal'),66,SP_COL); spawnSparks($('#revealBody'),14); SFX.jackpot(); }
-    else if(rcount>0){ confettiBurst($('#reveal'),26,['#ffd66b','#ffab2e','#ff7ba6']); SFX.chimeR(); } else { SFX.chimeN(); } }, 120+results.length*90+120);
+    else if(rcount>0){ confettiBurst($('#reveal'),26,R_CONFETTI); SFX.chimeR(); } else { SFX.chimeN(); } }, 120+results.length*90+120);
 }
 
 /* ---------- collection ---------- */
 function renderCollection(){
   const total=CHARS.length, got=Object.keys(state.owned).length;
   $('#compTxt').textContent=`${got} / ${total}`; $('#compBar').style.width=(got/total*100)+'%';
-  const order={SP:0,R:1,N:2}; const sorted=[...CHARS].sort((a,b)=>order[a.rarity]-order[b.rarity]);
-  $('#collGrid').innerHTML = sorted.map(c=>{ const cnt=state.owned[c.id];
+  $('#collGrid').innerHTML = CHARS_SORTED.map(c=>{ const cnt=state.owned[c.id];
     if(!cnt) return `<div class="cell locked"><div class="lockfig" style="width:64px;height:64px;font-size:26px">?</div><div class="nm">？？？</div></div>`;
     const R=RARITY[c.rarity];
     return `<div class="cell ${R.cls}" onclick="showDetail('${c.id}')"><span class="rb ${R.cls}">${R.label}</span>${cnt>1?`<span class="cnt">×${cnt}</span>`:''}
@@ -232,15 +239,15 @@ function showDetail(id){ SFX.tap();
 
 /* ---------- rates ---------- */
 function showRates(){ SFX.tap(); let html='';
-  ['SP','R','N'].forEach(t=>{ const R=RARITY[t];
+  RARITY_ORDER.forEach(t=>{ const R=RARITY[t];
     html+=`<div class="rate-head ${R.cls}"><span>${R.stars} ${R.label}</span><span>${R.tier}%</span></div>`;
-    CHARS.filter(c=>c.rarity===t).sort((a,b)=>charRate(b)-charRate(a)).forEach(c=>{ html+=`<div class="rate-row"><span>${c.name}</span><span>${charRate(c).toFixed(2)}%</span></div>`; }); });
+    [...POOLS[t]].sort((a,b)=>charRate(b)-charRate(a)).forEach(c=>{ html+=`<div class="rate-row"><span>${c.name}</span><span>${charRate(c).toFixed(2)}%</span></div>`; }); });
   html+=`<p class="note" style="margin-top:12px">天井なし（毎回くじ引き）。同じレアリティの中では人気キャラほど出にくい傾斜にしています。</p>`;
   $('#ratesBody').innerHTML=html; $('#rates').classList.add('show');
 }
 
 /* ---------- shop / settings ---------- */
-function give(type,amt){ SFX.coin(); if(type==='coin') state.coin+=amt; else state.tic+=amt; updateWallet(); popChip(type==='coin'?'coin':'tic'); toast(type==='coin'?`コイン +${fmt(amt)}！`:`チケット +${amt}！`); }
+function give(type,amt){ const coin=type==='coin'; SFX.coin(); if(coin) state.coin+=amt; else state.tic+=amt; updateWallet(); popChip(type); toast(coin?`コイン +${fmt(amt)}！`:`チケット +${amt}！`); }
 function resetAll(){ state={coin:START.coin, tic:START.tic, owned:{}}; updateWallet(); renderCollection(); toast('リセットしました'); }
 function close_(id){ $('#'+id).classList.remove('show'); }
 

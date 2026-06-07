@@ -34,6 +34,10 @@ jobs:
         with:
           enablement: true
 
+      - name: Build
+        # ソース(gacha-para/)からルートの index.html / standalone.html を生成
+        run: python3 gacha-para/build.py
+
       - name: Upload artifact
         # リポジトリのルートをそのまま公開（ルートの index.html がトップページ）
         uses: actions/upload-pages-artifact@v3
