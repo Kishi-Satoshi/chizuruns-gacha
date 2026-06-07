@@ -35,7 +35,10 @@ function setNum(el,target,key){
     el.textContent=fmt(v); if(i<steps) _wa[key]=requestAnimationFrame(tick); else el.textContent=fmt(target); };
   _wa[key]=requestAnimationFrame(tick);
 }
-function updateWallet(){ setNum($('#coinVal'),state.coin,'coin'); setNum($('#ticVal'),state.tic,'tic'); }
+function updateWallet(){ setNum($('#coinVal'),state.coin,'coin'); setNum($('#ticVal'),state.tic,'tic'); refreshCTA(); }
+// 残高に応じてホームの抽選ボタンの「買える/買えない」を見た目で示す（操作は可能・押すと案内）
+function refreshCTA(){ const off=(id,ok)=>{ const el=$(id); if(el) el.classList.toggle('is-off', !ok); };
+  off('#btnTen', canTen()); off('#btnSingle', state.coin>=COST.single); off('#btnTicket', state.tic>0); }
 function popChip(t){ const el=$(t==='coin'?'#coinChip':'#ticChip'); if(!el)return; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
 
 /* ---------- figure ---------- */

@@ -65,7 +65,7 @@ body{
 .gem .ic.coin{background:radial-gradient(circle at 35% 30%, #fff0bf, var(--gold1) 62%, var(--gold2)); box-shadow:inset 0 0 0 2px #ffdf86, 0 0 10px rgba(255,200,70,.5);}
 .gem .ic.tic{background:linear-gradient(135deg,#ff9ec2,#ff4f86); color:#fff; box-shadow:0 0 10px rgba(255,90,150,.5);}
 .gem .val{min-width:48px; text-align:right; font-weight:800; font-size:15px; color:var(--ink);}
-.gem .plus{width:21px;height:21px;border-radius:50%;border:none;cursor:pointer; font-weight:800; font-size:15px; color:#3a1006;
+.gem .plus{width:26px;height:26px;border-radius:50%;border:none;cursor:pointer; font-weight:800; font-size:16px; color:#3a1006;
   background:var(--gold-grad); box-shadow:0 2px 0 var(--gold2); display:grid; place-items:center;}
 .gem .plus:active{transform:translateY(2px); box-shadow:none;}
 .gem.pop .val{animation:numPop .45s ease;}
@@ -180,6 +180,21 @@ main{position:relative; z-index:2; flex:1; overflow-y:auto; padding:6px 16px 104
 .btn-min.ticket{background:linear-gradient(180deg,rgba(127,214,205,.35),rgba(86,194,182,.25)); border-color:rgba(127,214,205,.4);}
 .btn-min:active{transform:scale(.94);}
 .rates-link{margin-top:1px; background:none; border:none; color:var(--muted); font-weight:800; font-size:12px; text-decoration:underline; cursor:pointer;}
+/* 残高不足のボタンは淡く（押すとショップ案内が出る） */
+.btn-pull.is-off,.btn-min.is-off{filter:grayscale(.5); opacity:.6;}
+.btn-pull.is-off{animation:none; box-shadow:0 6px 0 var(--gold2);}
+.btn-pull.is-off::after{display:none;}
+
+/* ホバー可能な端末（PC等）でのフィードバック。タップ端末では発火しない */
+@media (hover:hover){
+  .btn-pull:hover{filter:brightness(1.05);}
+  .btn-min:hover,.shop-btn:hover,.mclose:hover,.ra-again:hover:not(:disabled),.ra-close:hover,.gem .plus:hover{filter:brightness(1.12);}
+  .pickup:hover{filter:brightness(1.06);}
+  .tab:hover{color:var(--ink);}
+  .rates-link:hover{color:var(--ink);}
+  .cell:hover:not(.locked){border-color:rgba(255,255,255,.3);}
+  .is-off:hover{filter:grayscale(.5) brightness(1.05); opacity:.7;}
+}
 
 /* ---------- section / panels ---------- */
 .sec-title{font-family:'Rampart One'; font-size:24px; margin:8px 2px 14px; color:var(--gold0); -webkit-text-stroke:2px #2a0f3e; paint-order:stroke fill;}
