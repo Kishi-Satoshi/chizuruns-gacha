@@ -15,6 +15,15 @@ window.FEATURED = 'raburun';                      // PICK UP 表示キャラ
 
 window.CHARS = [
   {
+    "id": "ayanen",
+    "name": "あやねん",
+    "rarity": "SP",
+    "color": "#ff5d9e",
+    "w": 1,
+    "trait": "優しくてかわいい、ぷにるんずの人気者♪",
+    "img": "assets/characters/42.png"
+  },
+  {
     "id": "raburun",
     "name": "らぶるん",
     "rarity": "SP",
