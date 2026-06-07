@@ -102,7 +102,8 @@ function confettiBurst(node,n,colors){ const shapes=['sq','sq','sq','★','♥',
 /* ---------- navigation / toast ---------- */
 function go(id){ SFX.nav();
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
-  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on', b.id==='tab-'+id));
+  document.querySelectorAll('.tab').forEach(b=>{ const on=b.id==='tab-'+id; b.classList.toggle('on', on);
+    on ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'); });
   if(id==='collection') renderCollection(); $('main').scrollTop=0; }
 let toastT; function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1800); }
 
@@ -265,6 +266,14 @@ function buildPickup(){ const c=CHARS.find(x=>x.id===FEATURED)||CHARS[0];
   $('#pickupFig').innerHTML=`<img src="${c.img}" alt="${c.name}">`;
   $('#pickupName').innerHTML=`今だけ注目！ <b>${c.name}</b>`;
   $('#pickupRate').textContent=`${RARITY[c.rarity].label}・提供割合 ${charRate(c).toFixed(2)}%`; }
+
+/* ---------- accessibility / keyboard ---------- */
+// Escape でいちばん上に開いているオーバーレイを閉じる
+document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
+  const open=[...document.querySelectorAll('.overlay.show')]; if(open.length){ SFX.tap(); close_(open[open.length-1].id); } });
+// role="button" の要素を Enter / Space で起動できるように
+document.querySelectorAll('[role="button"]').forEach(el=>el.addEventListener('keydown', e=>{
+  if(e.key==='Enter' || e.key===' '){ e.preventDefault(); el.click(); } }));
 
 /* ---------- init ---------- */
 buildBalls(); buildFloat(); buildPickup(); updateWallet();

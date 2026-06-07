@@ -13,6 +13,11 @@
   --radius:22px;
 }
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+/* キーボード操作時のみ見えるフォーカスリング（マウス/タップ時は出ない） */
+:focus-visible{outline:3px solid var(--gold0); outline-offset:2px; border-radius:8px;}
+button:focus-visible,[role="button"]:focus-visible,a:focus-visible{outline:3px solid var(--gold0); outline-offset:3px;}
+/* スクリーンリーダー専用（視覚的には非表示） */
+.sr-only{position:absolute!important; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;}
 html,body{margin:0; height:100%;}
 body{
   background:#0c0518; color:var(--ink);
@@ -362,6 +367,13 @@ main{position:relative; z-index:2; flex:1; overflow-y:auto; padding:6px 16px 104
   background:#160a26; border:1px solid var(--line); color:#fff; font-weight:800; font-size:13px; padding:11px 20px; border-radius:999px; opacity:0; transition:.3s; pointer-events:none; max-width:90%; text-align:center;}
 #toast.show{opacity:.98; transform:translateX(-50%) translateY(0);}
 
+/* モーションを抑える設定の利用者には、装飾アニメーション全体を実質停止する
+   （手動リストの維持をやめ、すべてのアニメ/トランジションを最小化） */
 @media (prefers-reduced-motion: reduce){
-  .machine-wrap,.ball,.btn-pull,.btn-pull::after,.logo span,.floatfx b,.bg-spot,.core,.mglow,.body::before{animation:none !important;}
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
 }

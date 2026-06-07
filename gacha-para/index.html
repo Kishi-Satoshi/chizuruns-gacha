@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ガチャパラ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -20,12 +20,12 @@
       <div class="sub">GACHA PARA</div>
     </div>
     <div class="wallet">
-      <div class="gem coin" id="coinChip"><div class="ic coin">★</div><div class="val" id="coinVal">0</div><button class="plus" onclick="go('shop')">+</button></div>
-      <div class="gem tic" id="ticChip"><div class="ic tic">🎫</div><div class="val" id="ticVal">0</div><button class="plus" onclick="go('shop')">+</button></div>
+      <div class="gem coin" id="coinChip"><div class="ic coin" aria-hidden="true">★</div><span class="sr-only">コイン </span><div class="val" id="coinVal">0</div><button class="plus" onclick="go('shop')" aria-label="コインを追加">+</button></div>
+      <div class="gem tic" id="ticChip"><div class="ic tic" aria-hidden="true">🎫</div><span class="sr-only">チケット </span><div class="val" id="ticVal">0</div><button class="plus" onclick="go('shop')" aria-label="チケットを追加">+</button></div>
     </div>
   </header>
 
-  <div class="pickup" id="pickup" onclick="showRates()">
+  <div class="pickup" id="pickup" onclick="showRates()" role="button" tabindex="0" aria-label="提供割合を見る">
     <div class="pickup-fig" id="pickupFig"></div>
     <div class="pickup-body">
       <span class="pickup-tag">★ PICK UP</span>
@@ -117,7 +117,7 @@
     </section>
   </main>
 
-  <nav class="tabbar">
+  <nav class="tabbar" aria-label="メインメニュー">
     <button class="tab on" id="tab-home" onclick="go('home')">
       <svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5h4v5"/></svg>ホーム<div class="ind"></div></button>
     <button class="tab" id="tab-collection" onclick="go('collection')">
@@ -133,11 +133,11 @@
 <div id="charge"><div class="vig"></div><div class="beam"></div><div class="ring"></div></div>
 
 <!-- overlays -->
-<div class="overlay" id="rates" onclick="if(event.target===this)close_('rates')"><div class="sheet"><h2>提供割合</h2><div id="ratesBody"></div><button class="mclose" onclick="close_('rates')">とじる</button></div></div>
-<div class="overlay" id="detail" onclick="if(event.target===this)close_('detail')"><div class="sheet" id="detailBody" style="text-align:center"></div></div>
-<div class="overlay" id="reveal"><div class="sheet" id="revealBody"></div></div>
+<div class="overlay" id="rates" role="dialog" aria-modal="true" aria-label="提供割合" onclick="if(event.target===this)close_('rates')"><div class="sheet"><h2>提供割合</h2><div id="ratesBody"></div><button class="mclose" onclick="close_('rates')">とじる</button></div></div>
+<div class="overlay" id="detail" role="dialog" aria-modal="true" aria-label="キャラクター詳細" onclick="if(event.target===this)close_('detail')"><div class="sheet" id="detailBody" style="text-align:center"></div></div>
+<div class="overlay" id="reveal" role="dialog" aria-modal="true" aria-label="ガチャ結果"><div class="sheet" id="revealBody"></div></div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script src="data.js"></script>
 <script src="app.js"></script>
