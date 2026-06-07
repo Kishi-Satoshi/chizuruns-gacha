@@ -8,12 +8,13 @@ const RARITY_ORDER = Object.keys(RARITY);                                      /
 const rarityRank = r => RARITY_ORDER.indexOf(r);                              // 小さいほどレア
 const POOLS  = RARITY_ORDER.reduce((m,t)=>(m[t]=CHARS.filter(c=>c.rarity===t), m), {});
 const TIER_W = RARITY_ORDER.reduce((m,t)=>(m[t]=POOLS[t].reduce((s,c)=>s+c.w,0), m), {});
+const TIER_TOTAL = RARITY_ORDER.reduce((s,t)=>s+RARITY[t].tier,0);   // 出現率の合計（通常100）
 const CHARS_SORTED = [...CHARS].sort((a,b)=>rarityRank(a.rarity)-rarityRank(b.rarity));
 
 /* ---------- probability ---------- */
 function charRate(c){ return RARITY[c.rarity].tier * (c.w / TIER_W[c.rarity]); }
 function pullOne(){
-  const r = Math.random()*100;
+  const r = Math.random()*TIER_TOTAL;
   let acc = 0, tier = RARITY_ORDER[RARITY_ORDER.length-1];
   for(const t of RARITY_ORDER){ acc += RARITY[t].tier; if(r < acc){ tier = t; break; } }
   const pool = POOLS[tier]; let x = Math.random()*TIER_W[tier];
